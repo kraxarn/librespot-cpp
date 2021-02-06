@@ -1,30 +1,27 @@
-cmake_minimum_required(VERSION 3.15)
-
-project(librespot-cxx)
-
-set(CMAKE_CXX_STANDARD 17)
-if (POLICY CMP0048)
-	cmake_policy(SET CMP0048 NEW)
-endif ()
-
-option(ENABLE_LTO "Enable cross language linking time optimization" ON)
-if (ENABLE_LTO)
-	include(CheckIPOSupported)
-	check_ipo_supported(RESULT supported OUTPUT error)
-	if (supported)
-		message(STATUS "IPO / LTO enabled")
-		set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-		add_link_options(-fuse-ld=lld)
-	else ()
-		message(STATUS "IPO / LTO not supported: <${error}>")
-	endif ()
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+	set(CARGO_CMD cargo build --verbose)
+	set(TARGET_DIR "debug")
 else ()
-	message(STATUS "IPO / LTO disabled")
+	set(CARGO_CMD cargo build --release --verbose)
+	set(TARGET_DIR "release")
 endif ()
 
-include_directories(${CMAKE_BINARY_DIR}/rs)
-include_directories(src)
+if (ENABLE_LTO)
+	set(RUST_FLAGS "-Clinker-plugin-lto" "-Clinker=clang-11" "-Clink-arg=-fuse-ld=lld-11")
+endif ()
 
-add_subdirectory(rs)
-add_executable(librespot-cxx src/main.cpp)
-target_link_libraries(librespot-cxx librespot-cxx-rs)
+set(RUST_PART_LIB "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_DIR}/liblibrespot_cxx.a")
+set(RUST_PART_CXX "${CMAKE_CURRENT_BINARY_DIR}/librespot_cxx.cpp")
+
+add_library(librespot-cxx-rs STATIC ${RUST_PART_CXX})
+add_custom_command(
+		OUTPUT ${RUST_PART_CXX}
+		COMMAND CARGO_TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR} RUSTFLAGS="${RUST_FLAGS}" ${CARGO_CMD}
+		COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/cxxbridge/librespot-cxx/src/lib.rs.cc
+		${RUST_PART_CXX}
+		COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/cxxbridge/librespot-cxx/src/lib.rs.h
+		${CMAKE_CURRENT_BINARY_DIR}/librespot_cxx.h
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(librespot-cxx-rs pthread dl ${RUST_PART_LIB})

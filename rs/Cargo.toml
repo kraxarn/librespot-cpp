@@ -1,0 +1,20 @@
+[package]
+name = "librespot-cxx"
+version = "0.1.0"
+authors = ["kraxarn <me@kraxarn.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cxx = "1.0"
+librespot-core = "0.1"
+librespot-playback = "0.1"
+librespot-protocol = "0.1"
+tokio-core = "0.1"
+
+[build-dependencies]
+cxx-build = "1.0"
+
+[lib]
+crate-type = ["staticlib"]

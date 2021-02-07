@@ -48,17 +48,17 @@ fn with_password(username: String, password: String) -> Box<Credentials> {
 pub struct Session(librespot_core::session::Session);
 
 fn connect(session_config: &Box<SessionConfig>,
-		   credentials_box: &Box<Credentials>) -> Result<Box<Session>, String>
+		   credentials: &Box<Credentials>) -> Result<Box<Session>, String>
 {
 	let config = (**session_config).0.clone();
-	let creds = (**credentials_box).0.clone();
+	let credential = (**credentials).0.clone();
 
 	let join_handle = std::thread::spawn(move || {
 		let mut core = tokio_core::reactor::Core::new().unwrap();
 		let handle = core.handle();
 
 		core.run(librespot_core::session::Session::connect(
-			config, creds, None, handle)).unwrap()
+			config, credential, None, handle)).unwrap()
 	});
 
 	match join_handle.join() {

@@ -1,5 +1,5 @@
 [package]
-name = "librespot-cxx"
+name = "librespot-cpp"
 version = "0.1.0"
 authors = ["kraxarn <me@kraxarn.com>"]
 edition = "2018"

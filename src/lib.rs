@@ -21,7 +21,14 @@ mod ffi {
 		fn connect(session_config: &Box<SessionConfig>,
 				   credentials: &Box<Credentials>) -> Result<Box<Session>>;
 	}
+
+	#[namespace = "librespot::playback::audio_backend"]
+	extern "Rust" {
+		fn backends() -> Vec<String>;
+	}
 }
+
+//region librespot_core
 
 //region librespot_core::config::SessionConfig
 
@@ -67,5 +74,22 @@ fn connect(session_config: &Box<SessionConfig>,
 			.unwrap_or(&"Unknown Error".to_string()).to_string()),
 	}
 }
+
+//endregion
+
+//endregion
+
+//region librespot_playback
+
+//region librespot::playback::audio_backend
+
+fn backends() -> std::vec::Vec<String> {
+	librespot_playback::audio_backend::BACKENDS
+		.iter()
+		.map(|backend| backend.0.to_string())
+		.collect()
+}
+
+//endregion
 
 //endregion

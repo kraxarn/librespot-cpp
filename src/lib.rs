@@ -26,8 +26,7 @@ mod ffi {
 		type Session;
 
 		fn connect(session_config: &Box<SessionConfig>,
-				   credentials: &Box<Credentials>,
-				   mut core: &mut Box<Core>) -> Box<Session>;
+				   credentials: &Box<Credentials>) -> Result<Box<Session>>;
 	}
 }
 
@@ -66,14 +65,24 @@ fn with_password(username: String, password: String) -> Box<Credentials> {
 pub struct Session(librespot_core::session::Session);
 
 fn connect(session_config: &Box<SessionConfig>,
-		   credentials: &Box<Credentials>,
-		   core: &mut Box<Core>) -> Box<Session>
+		   credentials_box: &Box<Credentials>) -> Result<Box<Session>, String>
 {
-	let session = librespot_core::session::Session
-	::connect((**session_config).0.clone(), (**credentials).0.clone(),
-			  None, (*core).0.handle());
+	let config = (**session_config).0.clone();
+	let creds = (**credentials_box).0.clone();
 
-	Box::new(Session((*core).0.run(session).unwrap()))
+	let join_handle = std::thread::spawn(move || {
+		let mut core = tokio_core::reactor::Core::new().unwrap();
+		let handle = core.handle();
+
+		core.run(librespot_core::session::Session::connect(
+			config, creds, None, handle)).unwrap()
+	});
+
+	match join_handle.join() {
+		Ok(s) => Ok(Box::new(Session(s))),
+		Err(e) => Err(e.downcast_ref::<String>()
+			.unwrap_or(&"Unknown Error".to_string()).to_string()),
+	}
 }
 
 //endregion

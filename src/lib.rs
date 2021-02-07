@@ -1,12 +1,5 @@
 #[cxx::bridge]
 mod ffi {
-	#[namespace = "rs::tokio::core"]
-	extern "Rust" {
-		type Core;
-
-		fn core() -> Box<Core>;
-	}
-
 	#[namespace = "rs::core::config"]
 	extern "Rust" {
 		type SessionConfig;
@@ -29,16 +22,6 @@ mod ffi {
 				   credentials: &Box<Credentials>) -> Result<Box<Session>>;
 	}
 }
-
-//region tokio_core::reactor::Core
-
-pub struct Core(tokio_core::reactor::Core);
-
-fn core() -> Box<Core> {
-	Box::new(Core(tokio_core::reactor::Core::new().unwrap()))
-}
-
-//endregion
 
 //region librespot_core::config::SessionConfig
 
